@@ -1,13 +1,22 @@
 :repository-owner: arduino-libraries
 :repository-name: SD
 
-= {repository-name} Library for Arduino =
+= {repository-name} Library for ESPboy =
 
 image:https://github.com/{repository-owner}/{repository-name}/actions/workflows/check-arduino.yml/badge.svg["Check Arduino status", link="https://github.com/{repository-owner}/{repository-name}/actions/workflows/check-arduino.yml"]
 image:https://github.com/{repository-owner}/{repository-name}/actions/workflows/compile-examples.yml/badge.svg["Compile Examples status", link="https://github.com/{repository-owner}/{repository-name}/actions/workflows/compile-examples.yml"]
 image:https://github.com/{repository-owner}/{repository-name}/actions/workflows/spell-check.yml/badge.svg["Spell Check status", link="https://github.com/{repository-owner}/{repository-name}/actions/workflows/spell-check.yml"]
 
-The SD library allows for reading from and writing to SD cards.
+The SD library allows for reading from and writing to SD cards using ESPboy SD module.
+
+###Connection:
+
+* Battery VCC 3.80V → diode → 3.36V SD
+* GND → GND SD
+* SCK (GPIO14) → CLK SD
+* MISO (GPIO12) → MISO SD
+* MOSI (GPIO13) → MOSI SD
+* B7 MCP23017 → CS SD
 
 For more information about this library please visit us at
 http://www.arduino.cc/en/Reference/{repository-name}
