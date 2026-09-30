@@ -1,83 +1,41 @@
-/*
-  SD card test
-
-  This example shows how use the utility libraries on which the
-  SD library is based in order to get info about your SD card.
-  Very useful for testing a card when you're not sure whether its working or not.
-  Pin numbers reflect the default SPI pins for Uno and Nano models.
-  The circuit:
-    SD card attached to SPI bus as follows:
- ** SDO - pin 11 on Arduino Uno/Duemilanove/Diecimila
- ** SDI - pin 12 on Arduino Uno/Duemilanove/Diecimila
- ** CLK - pin 13 on Arduino Uno/Duemilanove/Diecimila
- ** CS - depends on your SD card shield or module.
- 		Pin 10 used here for consistency with other Arduino examples
-
-  created  28 Mar 2011
-  by Limor Fried
-  modified 24 July 2020
-  by Tom Igoe
-*/
-// include the SD library:
 #include <SPI.h>
-#include <SD.h>
+#include <ESPboy_SD.h>
+#include "lib/ESPboyInit.h"
+#include "lib/ESPboyInit.cpp"
 
-// set up variables using the SD utility library functions:
+ESPboyInit myESPboy;
+const int chipSelect = 15;
+
+// Utility classes are in global scope inside SdFat.h
 Sd2Card card;
 SdVolume volume;
 SdFile root;
 
-// change this to match your SD shield or module;
-// Default SPI on Uno and Nano: pin 10
-// Arduino Ethernet shield: pin 4
-// Adafruit SD shields and modules: pin 10
-// Sparkfun SD shield: pin 8
-// MKR Zero SD: SDCARD_SS_PIN
-const int chipSelect = 10;
-
 void setup() {
-  // Open serial communications and wait for port to open:
   Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+  while (!Serial);
 
-
+  myESPboy.begin("CardInfo");
   Serial.print("\nInitializing SD card...");
 
-  // we'll use the initialization code from the utility libraries
-  // since we're just testing if the card is working!
-  if (!card.init(SPI_HALF_SPEED, chipSelect)) {
-    Serial.println("initialization failed. Things to check:");
-    Serial.println("* is a card inserted?");
-    Serial.println("* is your wiring correct?");
-    Serial.println("* did you change the chipSelect pin to match your shield or module?");
-    Serial.println("Note: press reset button on the board and reopen this Serial Monitor after fixing your issue!");
+  // Use the modified init() method passing MCP pointer
+  if (!card.init(SPI_HALF_SPEED, chipSelect, &myESPboy.mcp)) {
+    Serial.println("initialization failed.");
     while (1);
   } else {
     Serial.println("Wiring is correct and a card is present.");
   }
 
-  // print the type of card
-  Serial.println();
   Serial.print("Card type:         ");
   switch (card.type()) {
-    case SD_CARD_TYPE_SD1:
-      Serial.println("SD1");
-      break;
-    case SD_CARD_TYPE_SD2:
-      Serial.println("SD2");
-      break;
-    case SD_CARD_TYPE_SDHC:
-      Serial.println("SDHC");
-      break;
-    default:
-      Serial.println("Unknown");
+    case SD_CARD_TYPE_SD1: Serial.println("SD1"); break;
+    case SD_CARD_TYPE_SD2: Serial.println("SD2"); break;
+    case SD_CARD_TYPE_SDHC: Serial.println("SDHC"); break;
+    default: Serial.println("Unknown");
   }
 
-  // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
-  if (!volume.init(card)) {
-    Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+  if (!volume.init(&card)) {
+    Serial.println("Could not find FAT16/FAT32 partition.");
     while (1);
   }
 
@@ -85,19 +43,17 @@ void setup() {
   Serial.println(volume.clusterCount());
   Serial.print("Blocks x Cluster:  ");
   Serial.println(volume.blocksPerCluster());
-
   Serial.print("Total Blocks:      ");
   Serial.println(volume.blocksPerCluster() * volume.clusterCount());
   Serial.println();
 
-  // print the type and size of the first FAT-type volume
   uint32_t volumesize;
   Serial.print("Volume type is:    FAT");
   Serial.println(volume.fatType(), DEC);
 
-  volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
-  volumesize *= volume.clusterCount();       // we'll have a lot of clusters
-  volumesize /= 2;                           // SD card blocks are always 512 bytes (2 blocks are 1 KB)
+  volumesize = volume.blocksPerCluster();    
+  volumesize *= volume.clusterCount();       
+  volumesize /= 2;                           
   Serial.print("Volume size (KB):  ");
   Serial.println(volumesize);
   Serial.print("Volume size (MB):  ");
@@ -106,10 +62,8 @@ void setup() {
   Serial.print("Volume size (GB):  ");
   Serial.println((float)volumesize / 1024.0);
 
-  Serial.println("\nFiles found on the card (name, date and size in bytes): ");
-  root.openRoot(volume);
-
-  // list all files in the card with date and size
+  Serial.println("\nFiles found on the card:");
+  root.openRoot(&volume);
   root.ls(LS_R | LS_DATE | LS_SIZE);
   root.close();
 }
